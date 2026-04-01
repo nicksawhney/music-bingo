@@ -190,8 +190,6 @@ See `examples/0401-april-fools/` for sample generated bingo card PDFs from an Ap
 
 - **25-30 items per round** is the sweet spot for a 5x5 card with free space. Each card gets a random 24 out of your pool.
 - **Energy arc matters.** Start mellow, build to peak energy, end with a fast blackout round.
-- **Covers rounds** are great for April Fools or themed nights — players hear an unexpected voice and have to ID the song.
-- **Guilty Pleasures** is always a crowd favorite. Lean into it.
 
 ## License
 
