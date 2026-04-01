@@ -1,0 +1,6 @@
+node_modules/
+cards/
+
+# Credentials — never commit these
+bingobaker-config.json
+spotify-config.json
