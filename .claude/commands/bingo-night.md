@@ -1,6 +1,6 @@
 # Plan a Music Bingo Night
 
-Help the user plan a complete music bingo night — from brainstorming rounds and songs to generating printable bingo cards.
+Help the user plan a complete music bingo night — from brainstorming rounds and songs to generating Spotify playlists and printable bingo cards.
 
 ## Argument
 
@@ -30,16 +30,20 @@ Once the user approves a round's song list, write it to a text file in `playlist
 - File naming: `playlists/{event_date}/round{N}_{theme}.txt` (e.g., `playlists/0415/round1_pop_divas.txt`)
 - For covers rounds, also create a `_spotify_ref.txt` with the format: `Song Title | Cover Artist (original: Original Artist)`
 
-### 4. Tell the user to build Spotify playlists
+### 4. Build Spotify playlists
 
-Tell the user to create a Spotify playlist for each round and add the songs. They can use the search helper:
+Build Spotify playlists directly from the song list files using `build-playlist`. Use `--prefix` with the event date so playlists group together in the user's Spotify library (the Spotify API doesn't support folders).
 
 ```bash
-node scripts/spotify.js search "Song Title"
-node scripts/spotify.js search "Song Title" --artist "Artist Name"
+# Build all playlists for the night with a date prefix
+node scripts/spotify.js build-playlist "Round 1 - Pop Divas" playlists/{event_date}/round1_pop_divas.txt --prefix "MM/DD Bingo"
+node scripts/spotify.js build-playlist "Round 2 - Covers" playlists/{event_date}/round2_covers.txt --covers --prefix "MM/DD Bingo"
+node scripts/spotify.js build-playlist "Round 3 - Guilty Pleasures" playlists/{event_date}/round3_guilty_pleasures.txt --prefix "MM/DD Bingo"
 ```
 
-If the user already has a Spotify playlist, they can export it instead of writing a text file by hand:
+This creates playlists named like `[04/15 Bingo] Round 1 - Pop Divas` and adds all the tracks automatically.
+
+**Alternative — if the user already has Spotify playlists**, export them to text files instead:
 
 ```bash
 node scripts/spotify.js get-playlist <playlist-url-or-id> --output playlists/{event_date}/round{N}_{theme}.txt
@@ -52,9 +56,9 @@ node scripts/spotify.js get-playlist <playlist-url-or-id> --output playlists/{ev
 Once the text files are ready, generate bingo cards for each round:
 
 ```bash
-node scripts/bingobaker.js create "Round 1 - Theme Name" playlists/{event_date}/round1_theme.txt
-node scripts/bingobaker.js create "Round 2 - Theme Name" playlists/{event_date}/round2_theme.txt
-# ... repeat for each round
+node scripts/bingobaker.js create "Round 1 - Pop Divas" playlists/{event_date}/round1_pop_divas.txt
+node scripts/bingobaker.js create "Round 2 - Covers" playlists/{event_date}/round2_covers.txt
+node scripts/bingobaker.js create "Round 3 - Guilty Pleasures" playlists/{event_date}/round3_guilty_pleasures.txt
 ```
 
 This creates PDFs in `cards/` with 40 unique cards per round (10 pages x 4 cards). Remind the user to print them.
@@ -64,6 +68,7 @@ This creates PDFs in `cards/` with 40 unique cards per round (10 pages x 4 cards
 Wrap up with a checklist for the user:
 - [ ] Print bingo cards for each round
 - [ ] Shuffle each Spotify playlist before playing
+- [ ] Optionally drag playlists into a folder in the Spotify app for organization
 - [ ] Bring daubers/markers for players
 - [ ] Have prizes ready for winners
 - [ ] Remember: for blackout rounds, use shorter song lists for faster games

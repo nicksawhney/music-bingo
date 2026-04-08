@@ -106,9 +106,10 @@ async function searchTrack(config, query, limit = 5) {
 
 async function addTracks(config, playlistId, trackUris) {
   // Spotify allows max 100 tracks per request
+  // Note: /playlists/{id}/items works, /playlists/{id}/tracks returns 403
   for (let i = 0; i < trackUris.length; i += 100) {
     const batch = trackUris.slice(i, i + 100);
-    await api(config, `/playlists/${playlistId}/tracks`, {
+    await api(config, `/playlists/${playlistId}/items`, {
       method: 'POST',
       body: JSON.stringify({ uris: batch }),
     });
@@ -298,11 +299,14 @@ async function main() {
       const name = args[1];
       const file = args[2];
       const isCover = args.includes('--covers');
+      const prefixIdx = args.indexOf('--prefix');
+      const prefix = prefixIdx > -1 ? args[prefixIdx + 1] : null;
       if (!name || !file) {
-        console.error('Usage: build-playlist "Playlist Name" path/to/songs.txt [--covers]');
+        console.error('Usage: build-playlist "Playlist Name" path/to/songs.txt [--covers] [--prefix "04/15 Bingo"]');
         process.exit(1);
       }
-      await buildPlaylist(config, name, file, isCover);
+      const fullName = prefix ? `[${prefix}] ${name}` : name;
+      await buildPlaylist(config, fullName, file, isCover);
       break;
     }
 
@@ -316,8 +320,9 @@ Commands:
       Search for a track
   create-playlist "Name"
       Create an empty playlist
-  build-playlist "Name" songs.txt [--covers]
-      Create playlist & add tracks from file (requires Extended Quota Mode)`);
+  build-playlist "Name" songs.txt [--covers] [--prefix "04/15 Bingo"]
+      Create playlist & add all tracks from file
+      --prefix wraps the name, e.g. "[04/15 Bingo] Round 1 - Pop Divas"`);
   }
 }
 

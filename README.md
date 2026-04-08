@@ -47,14 +47,20 @@ Output goes to `cards/`.
 
 ### `scripts/spotify.js`
 
-Reads your Spotify playlists and exports them as song lists for bingo card generation. Also includes search and playlist creation helpers.
+Reads and writes Spotify playlists. Export existing playlists to text files for bingo cards, or build new playlists from song lists.
 
 ```bash
-# Export a playlist's tracks to a text file (the key command!)
+# Export a playlist's tracks to a text file (for generating bingo cards)
 node scripts/spotify.js get-playlist https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M --output playlists/round1.txt
 
 # Export artist names instead of song titles (great for "Name That Artist" rounds)
 node scripts/spotify.js get-playlist PLAYLIST_ID --output playlists/round1.txt --format artists
+
+# Build a full playlist from a song list (search + create + add tracks)
+node scripts/spotify.js build-playlist "Round 3 - Guilty Pleasures" playlists/round3.txt
+
+# Build from a covers reference file (searches for specific artist versions)
+node scripts/spotify.js build-playlist "Covers Round" playlists/covers_ref.txt --covers
 
 # Search for a track
 node scripts/spotify.js search "MMMBop"
@@ -137,7 +143,23 @@ Edit `spotify-config.json` with your `clientId` and `clientSecret`.
 
 #### Getting your access and refresh tokens
 
-You need a one-time OAuth flow to get your `accessToken` and `refreshToken`. The easiest way is using the [spotify-mcp-server](https://github.com/marcelmarais/spotify-mcp-server) auth tool:
+You need a one-time OAuth flow to get your `accessToken` and `refreshToken`. There are two ways:
+
+**Option A: Direct (if you already have tokens)**
+
+If you have an access token and refresh token (e.g. from a previous OAuth flow or another Spotify tool), paste them directly into `spotify-config.json`:
+
+```json
+{
+  "clientId": "your-client-id",
+  "clientSecret": "your-client-secret",
+  "accessToken": "your-access-token",
+  "refreshToken": "your-refresh-token",
+  "redirectUri": "http://127.0.0.1:8888/callback"
+}
+```
+
+**Option B: Using spotify-mcp-server**
 
 ```bash
 git clone https://github.com/marcelmarais/spotify-mcp-server.git
@@ -147,11 +169,11 @@ npm install
 npm run auth
 ```
 
-This opens a browser for Spotify login. Once authenticated, copy the `accessToken` and `refreshToken` from the MCP server's config into your `spotify-config.json`. The script auto-refreshes tokens on subsequent runs.
+This opens a browser for Spotify login. Once authenticated, copy the `accessToken` and `refreshToken` from the MCP server's config into your `spotify-config.json`.
 
-#### Spotify API limitations (as of 2026)
+Either way, `scripts/spotify.js` auto-refreshes the access token on subsequent runs using your client credentials + refresh token.
 
-Apps in Spotify's Development Mode can read playlists, search tracks, and create empty playlists. Adding tracks to playlists programmatically requires [Extended Quota Mode](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) — but you don't need it for the core workflow. Just build your playlists in Spotify and export them.
+All Spotify features (search, read playlists, create playlists, add tracks) work with a standard Development Mode app — no Extended Quota Mode needed.
 
 ## Running a bingo night
 
