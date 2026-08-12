@@ -16,7 +16,7 @@ Work with the user to design their rounds. A typical night has 5-7 rounds. Consi
 - **Variety**: Mix up song-title rounds vs artist-name rounds.
 - **Crowd favorites**: Party Anthems and R&B Hits always land. Guilty Pleasures is a crowd-pleaser.
 - **Special rounds**: Covers (hear an unexpected voice, ID the original song), Famous Intros (blackout format), decades themes.
-- **25-30 items per round** is the sweet spot for a 5x5 card with free space. Each card gets a random 24.
+- **25-30 items per round** is the sweet spot for a 5x5 card with free space. Each card gets a random 24. **Blackout rounds MUST have exactly 30 items** — with only 24, every card is identical and everyone wins simultaneously. 30 items ensures each card gets a unique random subset of 24.
 
 ### 2. Curate the songs
 
@@ -32,7 +32,9 @@ Once the user approves a round's song list, write it to a text file in `playlist
 
 ### 4. Build Spotify playlists
 
-Build Spotify playlists directly from the song list files using `build-playlist`. Use `--prefix` with the event date so playlists group together in the user's Spotify library (the Spotify API doesn't support folders).
+Use `node scripts/spotify.js` — **not** the Spotify MCP server. The script auto-refreshes tokens from `spotify-config.json`; there is no separate auth command.
+
+Use `--prefix` with the event date so playlists group together in the user's Spotify library (the Spotify API doesn't support folders).
 
 ```bash
 # Build all playlists for the night with a date prefix
@@ -43,7 +45,24 @@ node scripts/spotify.js build-playlist "Round 3 - Guilty Pleasures" playlists/{e
 
 This creates playlists named like `[04/15 Bingo] Round 1 - Pop Divas` and adds all the tracks automatically.
 
-**Alternative — if the user already has Spotify playlists**, export them to text files instead:
+**Important — artist-name rounds**: Use `build-artist-round` instead of `build-playlist` for rounds where the .txt file contains artist names. It searches by `artist:NAME` (not title), and can reuse exact track URIs from an existing reference playlist to avoid mismatches:
+
+```bash
+# Dry-run: see proposed tracklist before building
+node scripts/spotify.js build-artist-round playlists/{event_date}/round1_artists.txt \
+  --reference <existing-playlist-url>
+
+# Build for real once you've reviewed the output
+node scripts/spotify.js build-artist-round playlists/{event_date}/round1_artists.txt \
+  --reference <existing-playlist-url> \
+  --build "Round 1 - Artist Round" --prefix "MM/DD Bingo"
+```
+
+The dry-run output marks each track as `[ref]` (reused from reference), `[search]` (new, auto-picked), or `[miss]` (not found). Search results show alternatives so you can verify the pick is right before committing.
+
+**Track removal is blocked** (DELETE /playlists/{id}/tracks returns 403 in Spotify dev mode). If tracks need to be swapped after building, do it manually in the Spotify app.
+
+**If the user already has a Spotify playlist**, export it to a text file instead:
 
 ```bash
 node scripts/spotify.js get-playlist <playlist-url-or-id> --output playlists/{event_date}/round{N}_{theme}.txt
@@ -56,12 +75,12 @@ node scripts/spotify.js get-playlist <playlist-url-or-id> --output playlists/{ev
 Once the text files are ready, generate bingo cards for each round:
 
 ```bash
-node scripts/bingobaker.js create "Round 1 - Pop Divas" playlists/{event_date}/round1_pop_divas.txt
-node scripts/bingobaker.js create "Round 2 - Covers" playlists/{event_date}/round2_covers.txt
-node scripts/bingobaker.js create "Round 3 - Guilty Pleasures" playlists/{event_date}/round3_guilty_pleasures.txt
+node scripts/bingobaker.js create "Round 1 - Pop Divas" playlists/{event_date}/round1_pop_divas.txt --date {event_date}
+node scripts/bingobaker.js create "Round 2 - Covers" playlists/{event_date}/round2_covers.txt --date {event_date}
+node scripts/bingobaker.js create "Round 3 - Guilty Pleasures" playlists/{event_date}/round3_guilty_pleasures.txt --date {event_date}
 ```
 
-This creates PDFs in `cards/` with 40 unique cards per round (10 pages x 4 cards). Remind the user to print them.
+This creates PDFs in `cards/{event_date}/` with 40 unique cards per round (10 pages x 4 cards). Remind the user to print them.
 
 ### 6. Game night checklist
 
@@ -71,4 +90,4 @@ Wrap up with a checklist for the user:
 - [ ] Optionally drag playlists into a folder in the Spotify app for organization
 - [ ] Bring daubers/markers for players
 - [ ] Have prizes ready for winners
-- [ ] Remember: for blackout rounds, use shorter song lists for faster games
+- [ ] Remember: blackout rounds must have 30 items so each card is unique — never 24 or fewer

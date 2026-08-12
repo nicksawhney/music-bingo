@@ -237,6 +237,99 @@ function extractPlaylistId(input) {
   return input;
 }
 
+// ── build-artist-round ────────────────────────────────────────────────────────
+
+async function buildArtistRound(config, artistFile, options = {}) {
+  const { referenceId, playlistName, prefix, overrides = new Map() } = options;
+
+  const artists = parseSongList(artistFile);
+  console.log(`\nArtist list: ${artists.length} artists from ${artistFile}`);
+
+  // Build a map of lowercase artist name → {trackName, uri} from reference playlist
+  const referenceMap = new Map();
+  if (referenceId) {
+    console.log(`\nLoading reference playlist...`);
+    const refTracks = await getPlaylistTracks(config, referenceId);
+    for (const track of refTracks) {
+      for (const artist of track.artists) {
+        referenceMap.set(artist.toLowerCase(), { trackName: track.name, uri: track.uri, artist });
+      }
+    }
+    console.log(`Reference loaded: ${referenceMap.size} artist entries\n`);
+  }
+
+  // Match each artist
+  const matched = [];
+  const unmatched = [];
+
+  for (const artist of artists) {
+    const ref = referenceMap.get(artist.toLowerCase());
+    if (ref) {
+      matched.push({ artist, trackName: ref.trackName, uri: ref.uri, source: 'reference' });
+    } else {
+      unmatched.push(artist);
+    }
+  }
+
+  // Search for unmatched artists
+  const searched = [];
+  for (const artist of unmatched) {
+    // Check for manual override first
+    const overrideId = overrides.get(artist.toLowerCase());
+    if (overrideId) {
+      searched.push({ artist, trackName: `[override: ${overrideId}]`, uri: `spotify:track:${overrideId}`, source: 'override' });
+      continue;
+    }
+    const results = await searchTrack(config, `artist:${artist}`, 3);
+    if (results.length > 0) {
+      const top = results[0];
+      searched.push({
+        artist,
+        trackName: top.name,
+        uri: top.uri,
+        source: 'search',
+        alternatives: results.slice(1).map(t => `"${t.name}" (${t.id})`),
+      });
+    } else {
+      searched.push({ artist, trackName: null, uri: null, source: 'not-found' });
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  // Print proposed tracklist
+  const allTracks = [...matched, ...searched];
+  console.log('\n── Proposed tracklist ──────────────────────────────────────────');
+  for (const t of allTracks) {
+    if (t.source === 'reference') {
+      console.log(`  ✓ [ref]      ${t.artist.padEnd(30)} → "${t.trackName}"`);
+    } else if (t.source === 'override') {
+      console.log(`  ✓ [override] ${t.artist.padEnd(30)} → ${t.trackName}`);
+    } else if (t.source === 'search') {
+      console.log(`  ? [search] ${t.artist.padEnd(30)} → "${t.trackName}"`);
+      if (t.alternatives.length) {
+        t.alternatives.forEach(a => console.log(`             ${''.padEnd(30)}   alt: ${a}`));
+      }
+    } else {
+      console.log(`  ✗ [miss]   ${t.artist.padEnd(30)} → NOT FOUND`);
+    }
+  }
+  console.log('────────────────────────────────────────────────────────────────');
+  console.log(`\n  ${matched.length} from reference, ${searched.length} searched`);
+  console.log(`  Re-run with --build "Playlist Name" --prefix "MM/DD Bingo" to create it.\n`);
+
+  // Build if requested
+  if (playlistName) {
+    const fullName = prefix ? `[${prefix}] ${playlistName}` : playlistName;
+    const uris = allTracks.filter(t => t.uri).map(t => t.uri);
+    const playlist = await createPlaylist(config, fullName, `Music Bingo - ${fullName}`);
+    await addTracks(config, playlist.id, uris);
+    console.log(`\nPlaylist created: ${playlist.external_urls.spotify}`);
+    console.log(`Added ${uris.length}/${allTracks.length} tracks`);
+  }
+
+  return allTracks;
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -310,6 +403,32 @@ async function main() {
       break;
     }
 
+    case 'build-artist-round': {
+      const file = args[1];
+      if (!file) {
+        console.error('Usage: build-artist-round artists.txt [--reference <playlist-url-or-id>] [--build "Name"] [--prefix "MM/DD Bingo"]');
+        process.exit(1);
+      }
+      const refIdx = args.indexOf('--reference');
+      const referenceId = refIdx > -1 ? extractPlaylistId(args[refIdx + 1]) : null;
+      const buildIdx = args.indexOf('--build');
+      const playlistName = buildIdx > -1 ? args[buildIdx + 1] : null;
+      const prefixIdx = args.indexOf('--prefix');
+      const prefix = prefixIdx > -1 ? args[prefixIdx + 1] : null;
+      // --override "Artist Name=trackId" (repeatable)
+      const overrides = new Map();
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--override' && args[i + 1]) {
+          const eqIdx = args[i + 1].indexOf('=');
+          if (eqIdx > -1) {
+            overrides.set(args[i + 1].slice(0, eqIdx).toLowerCase(), args[i + 1].slice(eqIdx + 1));
+          }
+        }
+      }
+      await buildArtistRound(config, file, { referenceId, playlistName, prefix, overrides });
+      break;
+    }
+
     default:
       console.log(`Music Bingo Spotify Tool
 
@@ -322,7 +441,12 @@ Commands:
       Create an empty playlist
   build-playlist "Name" songs.txt [--covers] [--prefix "04/15 Bingo"]
       Create playlist & add all tracks from file
-      --prefix wraps the name, e.g. "[04/15 Bingo] Round 1 - Pop Divas"`);
+      --prefix wraps the name, e.g. "[04/15 Bingo] Round 1 - Pop Divas"
+  build-artist-round artists.txt [--reference <playlist-url-or-id>] [--build "Name"] [--prefix "MM/DD Bingo"]
+      Build a playlist from an artist-name round file.
+      --reference: reuse exact tracks for matching artists from an existing playlist
+      --build: create the Spotify playlist (dry-run if omitted)
+      --prefix: wraps the playlist name`);
   }
 }
 

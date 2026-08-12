@@ -14,6 +14,7 @@
  *   --no-free-space Don't use a free space in the center
  *   --visibility V  public, hidden, or private (default: hidden)
  *   --download      Download PDF instead of opening print dialog
+ *   --date MMDD     Save PDF in cards/MMDD/ subfolder (e.g., --date 0520)
  *
  * Config: reads BingoBaker credentials from ./bingobaker-config.json
  *         { "email": "...", "password": "..." }
@@ -45,6 +46,7 @@ function parseArgs(args) {
       case '--no-free-space': opts.freeSpace = false; break;
       case '--visibility': opts.visibility = args[++i]; break;
       case '--download': opts.download = true; break;
+      case '--date': opts.date = args[++i]; break;
     }
   }
 
@@ -188,7 +190,10 @@ async function downloadPdf(browser, page, cardId, opts) {
     throw new Error('PDF generation timed out');
   }
   const safeName = opts.title.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const pdfPath = path.join(__dirname, '..', 'cards', `${safeName}.pdf`);
+  const cardsDir = opts.date
+    ? path.join(__dirname, '..', 'cards', opts.date)
+    : path.join(__dirname, '..', 'cards');
+  const pdfPath = path.join(cardsDir, `${safeName}.pdf`);
 
   // Ensure cards directory exists
   fs.mkdirSync(path.dirname(pdfPath), { recursive: true });
@@ -214,7 +219,8 @@ Options:
   --no-title         Don't show title on cards
   --no-free-space    No free space in center
   --visibility V     public, hidden, or private (default: hidden)
-  --download         Download PDF (default: print/download)`);
+  --download         Download PDF (default: print/download)
+  --date MMDD        Save PDF in cards/MMDD/ subfolder`);
     process.exit(1);
   }
 
