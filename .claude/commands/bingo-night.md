@@ -28,7 +28,7 @@ Once the user approves a round's song list, write it to a text file in `playlist
 
 - One item per line (song titles OR artist names, depending on the round format)
 - File naming: `playlists/{event_date}/round{N}_{theme}.txt` (e.g., `playlists/0415/round1_pop_divas.txt`)
-- For covers rounds, also create a `_spotify_ref.txt` with the format: `Song Title | Cover Artist (original: Original Artist)`
+- **ALWAYS create a `_spotify_ref.txt` alongside every round's `.txt`** — not just covers rounds. This records the exact song that plays for each card item, so the audio never drifts from the card and you have a written record of the real tracklist. Format: `Card Item | Song Title — Artist`. For covers rounds use `Song Title | Cover Artist (original: Original Artist)`. For artist rounds, generate it from the built playlist (step 4). Never skip this file.
 
 ### 4. Build Spotify playlists
 
@@ -60,7 +60,40 @@ node scripts/spotify.js build-artist-round playlists/{event_date}/round1_artists
 
 The dry-run output marks each track as `[ref]` (reused from reference), `[search]` (new, auto-picked), or `[miss]` (not found). Search results show alternatives so you can verify the pick is right before committing.
 
-**Track removal is blocked** (DELETE /playlists/{id}/tracks returns 403 in Spotify dev mode). If tracks need to be swapped after building, do it manually in the Spotify app.
+**Dedupe the actual songs across the whole night — no song plays twice.** The auto-builder can map a collab to two different artists (e.g. "Yeah!" → both Lil Jon and Ludacris) or reuse the same hit for an artist that appears in two rounds (e.g. Beyoncé → "Crazy In Love" in both Pop Divas and R&B). It can also pick the wrong artist's song for a collab (e.g. Usher → "If I Ain't Got You", which is Alicia Keys' track). After dry-running every round, scan for (a) the same track played twice anywhere, and (b) a card item whose song is actually by a different artist. Fix each with `--override "Artist Name=trackId"`. Overrides win over the reference, so you can pin any artist's song even when it matched the reference. Look up track IDs with `node scripts/spotify.js search "song" --artist "name"`.
+
+**Spotify write capabilities (verified 2026-08-19):**
+- **Add tracks** — ✅ works (the script posts to the `/items` alias, not the blocked `/tracks`).
+- **Reorder tracks** — ✅ works (`PUT /playlists/{id}/items`).
+- **Remove tracks** — ✅ works via PUT-replace. `DELETE /tracks` is 403-blocked and `DELETE /items` is unreliable, so `scripts/fix-playlist.js` deletes by fetching the current URIs, dropping the unwanted ones, and PUT-replacing the full list on `/items` (order isn't preserved — fine, playlists are shuffled at play time).
+
+```bash
+# Remove a wrong pick (and optionally add the correct one) after building:
+node scripts/fix-playlist.js <playlistId> --remove <trackId,...> [--add <trackId,...>]
+```
+
+Still prefer `--override` at build time to get picks right on the first pass. Use `fix-playlist.js` to repair a bad or duplicate pick after a playlist already exists, instead of rebuilding from scratch.
+
+**Reusing a round from a previous week?** Use `clone-playlist` — it copies exact track
+URIs, so obscure or ambiguous titles can't get mis-searched:
+
+```bash
+node scripts/spotify.js clone-playlist <source-playlist-id> "Round 3 - One-Hit Wonders" \
+  --prefix "MM/DD Bingo" [--output playlists/{date}/roundN_theme.txt] [--ref playlists/{date}/roundN_theme_spotify_ref.txt]
+```
+
+**A guest is contributing a playlist?** Spotify's dev-mode app returns 403 on
+`GET /playlists/{id}/tracks` and `/items` for playlists you don't own — following it into
+your library doesn't help. Ask the user to duplicate it into their own account (open
+playlist → Ctrl+A → right-click → Add to playlist → New playlist), then find it with
+`node scripts/spotify.js my-playlists --search "name"`.
+
+**Final dedupe gate**: after building every playlist, run a pass that pulls all tracks back
+down and checks no recording appears twice across the whole night (see `scripts/gen-refs.js`
+for the 0826 event as a template). This also cleans Spotify's `- Remaster` / `(feat. X)` /
+`- From "Movie"` suffixes out of card items, which look bad printed. Watch for accented
+artist names ("Céline Dion" vs "Celine Dion") silently missing the reference lookup and
+falling back to a search pick that collides with another round.
 
 **If the user already has a Spotify playlist**, export it to a text file instead:
 

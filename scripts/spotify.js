@@ -98,6 +98,21 @@ async function createPlaylist(config, name, description = '') {
   return data;
 }
 
+async function listMyPlaylists(config, filter = null) {
+  const found = [];
+  let url = '/me/playlists?limit=50';
+  while (url) {
+    const data = await api(config, url);
+    for (const p of data.items) {
+      if (!p) continue;
+      if (filter && !p.name.toLowerCase().includes(filter.toLowerCase())) continue;
+      found.push(p);
+    }
+    url = data.next;
+  }
+  return found;
+}
+
 async function searchTrack(config, query, limit = 5) {
   const params = new URLSearchParams({ q: query, type: 'track', limit: String(limit) });
   const data = await api(config, `/search?${params}`);
@@ -229,6 +244,19 @@ async function getPlaylistTracks(config, playlistId) {
   return tracks;
 }
 
+// Copy an existing playlist's exact tracks into a new playlist.
+// Used for reused rounds: searching by title can pick the wrong version
+// (e.g. "I Wish" → Stevie Wonder instead of Skee-Lo), so reuse the URIs.
+async function clonePlaylist(config, sourceId, newName) {
+  const tracks = await getPlaylistTracks(config, sourceId);
+  if (!tracks.length) throw new Error(`Source playlist ${sourceId} has no readable tracks`);
+
+  const created = await createPlaylist(config, newName, 'Music bingo round');
+  await addTracks(config, created.id, tracks.map(t => t.uri));
+  console.log(`  Cloned ${tracks.length} tracks.`);
+  return { playlist: created, tracks };
+}
+
 function extractPlaylistId(input) {
   // Handle full URLs like https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
   const urlMatch = input.match(/playlist[/:]([a-zA-Z0-9]+)/);
@@ -258,11 +286,16 @@ async function buildArtistRound(config, artistFile, options = {}) {
     console.log(`Reference loaded: ${referenceMap.size} artist entries\n`);
   }
 
-  // Match each artist
+  // Match each artist — manual overrides win over reference, reference wins over search
   const matched = [];
   const unmatched = [];
 
   for (const artist of artists) {
+    const overrideId = overrides.get(artist.toLowerCase());
+    if (overrideId) {
+      matched.push({ artist, trackName: `[override: ${overrideId}]`, uri: `spotify:track:${overrideId}`, source: 'override' });
+      continue;
+    }
     const ref = referenceMap.get(artist.toLowerCase());
     if (ref) {
       matched.push({ artist, trackName: ref.trackName, uri: ref.uri, source: 'reference' });
@@ -343,7 +376,7 @@ async function main() {
     case 'get-playlist': {
       const input = args[1];
       if (!input) {
-        console.error('Usage: get-playlist <playlist-url-or-id> [--output songs.txt] [--format titles|artists]');
+        console.error('Usage: get-playlist <playlist-url-or-id> [--output songs.txt] [--format titles|artists|uris]');
         process.exit(1);
       }
       const playlistId = extractPlaylistId(input);
@@ -356,6 +389,9 @@ async function main() {
       let lines;
       if (format === 'artists') {
         lines = tracks.map(t => t.artists[0]);
+      } else if (format === 'uris') {
+        // Track IDs, for feeding fix-playlist.js --remove
+        lines = tracks.map(t => `${t.uri.split(':').pop()}  ${t.name} — ${t.artists.join(', ')}`);
       } else {
         lines = tracks.map(t => t.name);
       }
@@ -365,6 +401,44 @@ async function main() {
         console.log(`Wrote ${lines.length} items to ${outputFile}`);
       } else {
         lines.forEach(l => console.log(l));
+      }
+      break;
+    }
+
+    case 'my-playlists': {
+      const searchIdx = args.indexOf('--search');
+      const filter = searchIdx > -1 ? args[searchIdx + 1] : null;
+      const playlists = await listMyPlaylists(config, filter);
+      playlists.forEach(p => {
+        const count = p.tracks ? p.tracks.total : '?';
+        const owner = p.owner ? p.owner.display_name : 'unknown';
+        console.log(`"${p.name}" — ${count} tracks — by ${owner} — ${p.id}`);
+      });
+      console.log(`\n${playlists.length} playlist(s)`);
+      break;
+    }
+
+    case 'clone-playlist': {
+      const source = args[1];
+      const name = args[2];
+      if (!source || !name) {
+        console.error('Usage: clone-playlist <source-url-or-id> "New Name" [--prefix "MM/DD Bingo"] [--output songs.txt] [--ref songs_spotify_ref.txt]');
+        process.exit(1);
+      }
+      const prefixIdx = args.indexOf('--prefix');
+      const fullName = prefixIdx > -1 ? `[${args[prefixIdx + 1]}] ${name}` : name;
+      const { tracks } = await clonePlaylist(config, extractPlaylistId(source), fullName);
+
+      const outputIdx = args.indexOf('--output');
+      if (outputIdx > -1) {
+        fs.writeFileSync(args[outputIdx + 1], tracks.map(t => t.name).join('\n') + '\n', 'utf8');
+        console.log(`  Wrote card items to ${args[outputIdx + 1]}`);
+      }
+      const refIdx = args.indexOf('--ref');
+      if (refIdx > -1) {
+        const lines = tracks.map(t => `${t.name} | ${t.name} — ${t.artists.join(', ')}`);
+        fs.writeFileSync(args[refIdx + 1], lines.join('\n') + '\n', 'utf8');
+        console.log(`  Wrote Spotify ref to ${args[refIdx + 1]}`);
       }
       break;
     }
