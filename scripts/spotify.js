@@ -363,6 +363,89 @@ async function buildArtistRound(config, artistFile, options = {}) {
   return allTracks;
 }
 
+// ── auth ─────────────────────────────────────────────────────────────────────
+
+const SCOPES = [
+  'playlist-modify-private',
+  'playlist-modify-public',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-read-private',
+].join(' ');
+
+/**
+ * Run the authorization-code flow and write fresh tokens into spotify-config.json.
+ *
+ * Refresh tokens expire or get revoked (Spotify does this silently), and every other
+ * command dies on `invalid_grant` when that happens. This is the only way back without
+ * involving the spotify-mcp-server repo.
+ *
+ * The VM is remote, so the redirect lands on 127.0.0.1:8888 *here* — tunnel it from the
+ * laptop with `ssh -L 8888:127.0.0.1:8888 <vm>` before opening the URL in a browser.
+ */
+async function authCommand(config) {
+  const http = require('http');
+  const redirectUri = config.redirectUri;
+  const port = Number(new URL(redirectUri).port) || 8888;
+
+  const authUrl = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
+    client_id: config.clientId,
+    response_type: 'code',
+    redirect_uri: redirectUri,
+    scope: SCOPES,
+  });
+
+  console.log('\nOpen this URL in your browser:\n');
+  console.log(authUrl);
+  console.log(`\n(Remote VM? First run: ssh -L ${port}:127.0.0.1:${port} <this-vm>)`);
+  console.log(`\nWaiting for the callback on ${redirectUri} ...`);
+
+  const code = await new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url, `http://127.0.0.1:${port}`);
+      if (url.pathname !== new URL(redirectUri).pathname) {
+        res.writeHead(404).end('Not found');
+        return;
+      }
+      const err = url.searchParams.get('error');
+      const got = url.searchParams.get('code');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`<html><body style="font-family:sans-serif;padding:3rem">
+        <h2>${err ? 'Authorization failed' : 'Authorized.'}</h2>
+        <p>${err ? err : 'You can close this tab and return to the terminal.'}</p>
+      </body></html>`);
+      server.close();
+      err ? reject(new Error(`Authorization denied: ${err}`)) : resolve(got);
+    });
+    server.on('error', reject);
+    server.listen(port, '127.0.0.1');
+  });
+
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64'),
+    },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Token exchange failed: ${res.status} ${await res.text()}`);
+
+  const data = await res.json();
+  config.accessToken = data.access_token;
+  config.refreshToken = data.refresh_token;
+  config.expiresAt = Date.now() + data.expires_in * 1000;
+  saveConfig(config);
+
+  console.log(`\nTokens written to ${CONFIG_PATH}`);
+  return config;
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -370,6 +453,14 @@ async function main() {
   const command = args[0];
 
   let config = loadConfig();
+
+  // `auth` has to run before refreshIfNeeded — a dead refresh token is the whole
+  // reason you'd be running it, and refreshing first would throw on invalid_grant.
+  if (command === 'auth') {
+    await authCommand(config);
+    return;
+  }
+
   config = await refreshIfNeeded(config);
 
   switch (command) {
@@ -507,6 +598,10 @@ async function main() {
       console.log(`Music Bingo Spotify Tool
 
 Commands:
+  auth
+      Re-authorize with Spotify and write fresh tokens to spotify-config.json.
+      Run this when any command fails with "invalid_grant" / refresh token
+      expired or revoked. Remote VM: ssh -L 8888:127.0.0.1:8888 <vm> first.
   get-playlist <url-or-id> [--output file] [--format titles|artists]
       Export a playlist's tracks as a song list (for bingo cards)
   search "query" [--artist "name"]

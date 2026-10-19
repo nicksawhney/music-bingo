@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_one_hit_wonders",           "id": "7MYPNGSORTCZ0BwtQF0COw", "format": "titles"  },
+    { "file": "round2_boy_bands_vs_girl_groups",  "id": "1r4omJDR4y86QYLMh2t7TF", "format": "artists" },
+    { "file": "round3_millennials_in_love",       "id": "1xYwSnieEl1Ek7WVDAKSoB", "format": "artists" },
+    { "file": "round4_scorned_women",             "id": "4XkHQ7C6jBW1p3pt1j7piR", "format": "titles"  },
+    { "file": "round5_warped_tour",               "id": "34yQI4baXfjAQIicoFmOD5", "format": "titles"  },
+    { "file": "round6_pop_hits_blackout",         "id": "4rXDaOoD5y5pKZm1Kivyi1", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}

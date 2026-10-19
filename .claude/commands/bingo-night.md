@@ -32,7 +32,25 @@ Once the user approves a round's song list, write it to a text file in `playlist
 
 ### 4. Build Spotify playlists
 
-Use `node scripts/spotify.js` — **not** the Spotify MCP server. The script auto-refreshes tokens from `spotify-config.json`; there is no separate auth command.
+Use `node scripts/spotify.js` for **everything** Spotify — building, cloning, searching,
+reading, and auth. **Never** use the Spotify MCP server, and never reach into
+`~/spotify-mcp-server` (its `npm run auth` writes to a *different* config file than the
+one this repo reads). All the tooling you need is in `scripts/spotify.js` and
+`scripts/fix-playlist.js`.
+
+The script auto-refreshes tokens from `spotify-config.json`. When a refresh token expires
+or Spotify revokes it, **every** command dies up front with
+`Token refresh failed: 400 ... invalid_grant`. Fix it with:
+
+```bash
+node scripts/spotify.js auth
+```
+
+This prints an authorize URL, catches the callback on `127.0.0.1:8888`, and writes fresh
+tokens back to `spotify-config.json`. Claude Code runs on a **remote GCP VM**, so the user
+must tunnel the callback port from their laptop first — have them run
+`ssh -L 8888:127.0.0.1:8888 <vm>`, then open the printed URL in their laptop browser.
+Opening the auth URL without the tunnel will fail at the redirect.
 
 Use `--prefix` with the event date so playlists group together in the user's Spotify library (the Spotify API doesn't support folders).
 

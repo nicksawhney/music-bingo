@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_pop_divas",           "id": "3lT3BTLYRZ7gqCwofKQ7qD", "format": "artists" },
+    { "file": "round2_2010_music",          "id": "4rdm6hOvj14I0jPpsiVzuk", "format": "titles"  },
+    { "file": "round3_2020s_bangers",       "id": "2eb7B1De8dGalgJbCNyiwp", "format": "artists" },
+    { "file": "round4_rnb_hits",            "id": "0iRTq9BBAfq3NZ3jlGF5TU", "format": "artists" },
+    { "file": "round5_scorned_women",       "id": "3MhtbhR9TZuzgtIDUSlQp6", "format": "titles"  },
+    { "file": "round6_soft_rock_blackout",  "id": "0tOTwq6KkcqmPYHMqdNiXH", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}

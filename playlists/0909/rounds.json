@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_rnb_hits",                 "id": "2vXSTfF3QKfP6cCIx68x5I", "format": "artists" },
+    { "file": "round2_super_bowl_halftime",      "id": "7zQKTosOaOX7KblMCXphXV", "format": "artists" },
+    { "file": "round3_pop_divas",                "id": "1zZvXQ08NupFQdedc7X5FP", "format": "artists" },
+    { "file": "round4_nickelodeon_and_disney",   "id": "2RMhzgV621EtuRgXsa0Oo8", "format": "titles"  },
+    { "file": "round5_scorned_women",            "id": "2xRZDBbHvqbxvz0h4RUUdk", "format": "titles"  },
+    { "file": "round6_soft_rock_blackout",       "id": "0OGFuiVzJONEBhFcSTnpHT", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}

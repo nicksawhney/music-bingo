@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_pop_divas",               "id": "5BDdx8ibbHzGeOFrifds0W", "format": "artists" },
+    { "file": "round2_nickelodeon_and_disney",  "id": "50ePHWxcys9TJXSkmRXalt", "format": "titles"  },
+    { "file": "round3_2000s_bangers",           "id": "7pQ5sc3xzo8gnAr17fT8Kz", "format": "artists" },
+    { "file": "round4_wedding_reception",       "id": "7HUEVQIMFNOtQaFcaeNYYY", "format": "titles"  },
+    { "file": "round5_warped_tour",             "id": "1htn3xcrMEDZ02RoV9Rdi4", "format": "titles"  },
+    { "file": "round6_pop_hits_blackout",       "id": "7k7iPyrT2EWWocsX7M6X1N", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}
