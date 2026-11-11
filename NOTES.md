@@ -144,7 +144,15 @@ music-bingo-0225/
 ## Crowd Feedback (Fort Greene pub)
 
 - **Party Anthems**: Highest energy, whole bar singing. Keep reusing.
-- **R&B Hits**: Strong crowd response, lots of sing-along. Keep reusing.
+- **R&B Hits**: ~~Strong crowd response, lots of sing-along. Keep reusing.~~ **Superseded
+  2026-11-11** — Nick: "R&B has been hard for people lately. It really depends on the
+  demographic that shows up on a given night." Diagnosis: the list is 90s/2000s-locked
+  (TLC, Blackstreet, Ginuwine), so it only lands for a mid-30s–40s room and dies outside
+  it. Not an R&B problem — a *cohort-locked round* problem. Same risk applies to
+  Millennials in Love, Hip Hop & Rap, 2000s Bangers, Gen Z Party Anthems.
+  **When the crowd is unpredictable, prefer rounds that span decades by construction** —
+  Super Bowl Halftime (booked on broad fame), One-Hit Wonders (radio saturation),
+  Karaoke Classics.
 - **Pop Divas**: Good recognition energy. Works well as opener/warm-up. Nick's take
   (2026-09-02): "always a fun round and never gets old" — safe to run week after week, it
   doesn't need resting the way themed rounds do.
@@ -292,3 +300,44 @@ Spotify prefixes were left as-is so the two stay linked.
 Consequence: **don't compute "weeks since last played" from folder names alone.** Doing so
 makes a cancelled-and-reused set look a week more rested than it is. Known exception so
 far: 1007 → actually 10/14. Log any future ones here.
+
+### A "- Mix" / "- Edit" suffix often IS the hit (2026-11-11)
+
+Flagged four One-Hit Wonders tracks as wrong-version because of their suffixes. On
+checking release dates, **three were the original hit single** and only one was wrong:
+
+| Track | Reality |
+|-------|---------|
+| *Here Comes the Hotstepper - Heartical Mix* | 1994 original single. The Heartical Mix **is** the #1 hit |
+| *What Is Love - 7" Mix* | 1992 original single |
+| *Blue (Da Ba Dee) - Gabry Ponte Video Edit* | 1998 original single; the un-suffixed version isn't on Spotify at all |
+| *The One And Only - Acoustic* | **Genuinely wrong** — 3:13, 2022 compilation |
+
+**Check `album.release_date` before swapping, not the suffix.** A suffix near the original
+release year is the single; a clean title on a 2010s/2020s compilation is often the
+re-record. The `/v1/tracks` bulk endpoint is 403 in dev mode — fetch `/v1/tracks/{id}`
+one at a time.
+
+### Mononym card items can resolve to a different artist (2026-11-11)
+
+`build-artist-round` dry-run gave **Selena** → *Love You Like A Love Song*. That's Selena
+**Gomez**; the card meant Selena Quintanilla. Nothing in the output flags it — it reads as
+a clean `[search]` hit.
+
+Same dry-run also gave two feature-credit errors — *WAP* for Megan Thee Stallion (Cardi B's
+song) and *We Are Young* for Janelle Monáe (fun.'s song) — plus **Luke Combs → *Fast Car***,
+which collides with Tracy Chapman *in the same round*.
+
+**Never build an artist round without reading the full dry-run.** Watch for: mononyms,
+tracks where the card artist is only a feature, and covers that collide with the original
+elsewhere on the card.
+
+### Pop Divas + Millennials in Love always collide (2026-11-11)
+
+They share five artists — Beyoncé, Alicia Keys, Rihanna, Adele, Lady Gaga — and the
+builder hands each the same signature song in both rounds. On 11/11 that was four
+duplicate recordings.
+
+Fix used: repoint the *Millennials in Love* picks to love-specific songs (*Love On Top*,
+*No One*, *Stay*, *Make You Feel My Love*), which suits that round better anyway. Expect
+this every time these two rounds share a night.

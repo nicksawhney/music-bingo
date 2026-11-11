@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_pop_divas",            "id": "4iyMQmz8QeA3tnUiIWI8jn", "format": "artists" },
+    { "file": "round2_blue_tsunami",         "id": "32ZGfd90gYQ2ZKApOE9HVU", "format": "artists" },
+    { "file": "round3_one_hit_wonders",      "id": "6QYEF7MuIceomFJQLTc1fN", "format": "titles"  },
+    { "file": "round4_millennials_in_love",  "id": "4HVn07rZcoGOsXBLHJc9cf", "format": "artists" },
+    { "file": "round5_2000s_bangers",        "id": "4bM2M9Zs1enVZgtXWsw3j3", "format": "artists" },
+    { "file": "round6_holiday_blackout",     "id": "4QsmzPou0IZzGYQwdHwd2l", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}
