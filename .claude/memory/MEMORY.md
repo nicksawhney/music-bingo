@@ -16,3 +16,4 @@
 - [WebSearch blocked](reference_websearch_blocked.md) — org Vertex policy blocks WebSearch; use WebFetch on a known URL
 - [Clone/output format bug](reference_clone_output_format_bug.md) — clone-playlist --output writes titles even for artist rounds; copy the source week's .txt instead
 - [Keep novelty tracks](feedback_keep_novelty_tracks.md) — when trimming a round, cut the redundant song, not the goofy one
+- [Cohort-locked rounds](feedback_cohort_locked_rounds.md) — R&B Hits has gone stale; prefer decade-spanning rounds when the crowd is unpredictable
