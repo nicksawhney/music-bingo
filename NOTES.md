@@ -203,3 +203,92 @@ Avoid these on artist cards, or pin them knowingly:
 - **Gloria Estefan** — "Conga" is credited to Miami Sound Machine (she is listed second,
   so `pairByArtist` still resolves it).
 - **Silk Sonic / Bruno Mars** — same track credits both; pick which one is the card item.
+
+### Title rounds collide with artist rounds through the *pinned* track (2026-10-19)
+
+A title round and an artist round can look disjoint on the cards and still play the same
+recording. The artist round's card item is just a name — the collision lives in whatever
+song that name resolves to.
+
+On 10/21, Wedding Reception (titles) and Famous Intros (artists) collided three times:
+
+| Famous Intros artist | 8/26 pinned track | Wedding Reception card item |
+|----------------------|-------------------|------------------------------|
+| Whitney Houston | I Wanna Dance with Somebody | I Wanna Dance with Somebody |
+| Earth, Wind & Fire | September | September |
+| Journey | Don't Stop Believin' | Don't Stop Believin' |
+
+This is structural, not bad luck: **Famous Intros pins each artist to their single most
+iconic song, and "most iconic song" is exactly the selection rule for Wedding Reception,
+Karaoke Classics and Party Anthems.** Any pairing of Famous Intros with one of those is
+guaranteed to collide somewhere.
+
+Fix used: swap the *artists* out of Famous Intros (→ Survivor, The Rolling Stones,
+Aerosmith) rather than repin them. Repinning to a lesser-known track defeats the round —
+the whole game is that the first two seconds are unmistakable.
+
+Next landmine if those two rounds meet again: **Bon Jovi** (*Livin' on a Prayer*).
+
+Check this *before* cloning, by diffing the artist round's `_spotify_ref.txt` right-hand
+side against the title round's `.txt`. `gen-refs.js` catches it too, but only after both
+playlists already exist.
+
+### gen-refs.js suffix cleaner misses parenthesized remasters (2026-10-19)
+
+It strips `- 2015 Remaster` but not `(2024 Remaster)`. The 10/21 Wedding Reception clone
+came back as `Don't Stop Believin' (2024 Remaster)` on the card. Re-read every rewritten
+card `.txt` after running it — print re-casing is already a manual post-step, so fold the
+suffix check into the same pass.
+
+### Recurring card-item ↔ Spotify-credit mismatches (2026-10-28)
+
+`gen-refs.js` will warn `no track found for card item "X"` for these every single time
+their round is cloned. The card items are *correct as printed* — only the ref lookup
+misses. Fill the two ref lines in by hand and move on.
+
+- **98 Degrees** (Boy Bands vs Girl Groups) — Spotify credits **98º**.
+- **The Black Eyed Peas** (2000s Bangers) — Spotify credits **Black Eyed Peas**, no "The".
+
+Same class as Céline Dion / 2Pac. Pattern: the warning is only a real problem when the
+*whole round* warns (wrong `.txt` format); one or two named artists is a credit-string
+mismatch.
+
+### A title search can mispick *within the right artist* (2026-10-28)
+
+NOTES already covers `build-artist-round` picking the wrong artist. The title-side version
+is just as bad: with `--covers`, `Thriller | Michael Jackson` resolved to **"Human
+Nature"** and `Bat Out of Hell | Meat Loaf` to **"Paradise By the Dashboard Light"** —
+right artist, wrong song, and nothing in the output flags it as suspicious.
+
+Plain `search "Thriller" --artist "Michael Jackson"` also failed to return Thriller.
+`search "track:Thriller artist:Michael Jackson"` returns it first. **Use field-qualified
+search syntax when repinning a track.**
+
+So: read every line of a `--covers` build, not just the `NOT FOUND` list.
+
+### Halloween rounds (2026-10-28)
+
+Two Halloween rounds work if each gets its own hard boundary, and they must be curated
+against each other or they converge:
+
+- **Halloween Classics** — the literal canon (Monster Mash, Thriller, Ghostbusters, Time
+  Warp, Carpenter's *Halloween* theme). A *recognition* round, not a singalong.
+- **Monsters, Ghosts & Devils** — a monster/ghost/devil/horror word in the title, from
+  modern pop and rock. Blackout closer.
+
+Watch the devil count — the second round drifted to five devil songs before trimming.
+Also avoid near-identical card items across the two (*Black Magic Woman* in one vs
+*Black Magic* in the other was caught and swapped for *Voodoo Child*).
+
+Scooby-Doo: the original TV theme is not on Spotify as a real recording, only karaoke
+re-records. Use **What's New Scooby-Doo? — Simple Plan**.
+
+### Folder dates are build dates, not always show dates (2026-10-19)
+
+**`playlists/1007` and `cards/1007` were played on 10/14** — the 10/07 show was cancelled
+and Nick reused those cards the following week. The folder name and the `[10/07 Bingo]`
+Spotify prefixes were left as-is so the two stay linked.
+
+Consequence: **don't compute "weeks since last played" from folder names alone.** Doing so
+makes a cancelled-and-reused set look a week more rested than it is. Known exception so
+far: 1007 → actually 10/14. Log any future ones here.

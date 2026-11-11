@@ -1,0 +1,18 @@
+- [Nick - Music Bingo Host](user_profile.md) — hosts music bingo at a Fort Greene, Brooklyn pub
+- [Round energy feedback](feedback_round_energy.md) — Guilty Pleasures, Party Anthems & Songs With a Name all fall flat; the pub sings, it doesn't rave
+- [Tight round frames](feedback_tight_round_frames.md) — vibe themes produce AI-feeling mush; use identity rounds with a hard boundary
+- [Duets round tabled](project_duets_round_tabled.md) — curated and ready in playlists/0916/duets_TABLED.md, unrun
+- [April 1st event plan](project_0401_event.md) — 6 rounds: 3 reuse, April Fools covers, new TBD, Famous Intros blackout
+- [BingoBaker settings](feedback_bingobaker_settings.md) — show title, 10 pages x 4 cards, free space, 5x5
+- [Spotify tooling](reference_spotify_mcp.md) — always scripts/spotify.js, never the MCP server; `spotify.js auth` re-authorizes
+- [Prefer artist format](feedback_artist_format.md) — use artist names on cards so Nick can hot-swap songs while hosting
+- [Spotify ref files](feedback_spotify_ref_files.md) — curate + get approval on the song list BEFORE any Spotify write; never let search pick
+- [BingoBaker rate limits](feedback_bingobaker_rate_limit.md) — run card generation sequentially, don't overload the server
+- [No Ed Sheeran](feedback_no_ed_sheeran.md) — standing ban on Sheeran in every round, features included
+- [No song overlap](feedback_no_song_overlap.md) — artist repeats OK, but never play the same actual song twice; dedupe with --override
+- [Rotate rounds](feedback_rotate_rounds.md) — surface repeat rounds as a choice; Nick sometimes wants identical reruns
+- [Spotify delete solution](reference_spotify_delete_solution.md) — removal DOES work via PUT-replace in fix-playlist.js, not blocked
+- [Use real sources](feedback_use_real_sources.md) — get a guest's actual playlist; never reconstruct it from the theme
+- [WebSearch blocked](reference_websearch_blocked.md) — org Vertex policy blocks WebSearch; use WebFetch on a known URL
+- [Clone/output format bug](reference_clone_output_format_bug.md) — clone-playlist --output writes titles even for artist rounds; copy the source week's .txt instead
+- [Keep novelty tracks](feedback_keep_novelty_tracks.md) — when trimming a round, cut the redundant song, not the goofy one

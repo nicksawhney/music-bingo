@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_pop_divas",                 "id": "3342qiBEI0RLZ98tW2FE7h", "format": "artists" },
+    { "file": "round2_halloween_classics",        "id": "3wmmszu8HO0SKz61nFE0S2", "format": "titles"  },
+    { "file": "round3_boy_bands_vs_girl_groups",  "id": "3d6WbkiCaNaBL61Wt1MZm0", "format": "artists" },
+    { "file": "round4_scorned_women",             "id": "70BHphqVAMb3p1m2vsbgpW", "format": "titles"  },
+    { "file": "round5_2000s_bangers",             "id": "6G52UPmqvrRkZr0oeacL3m", "format": "artists" },
+    { "file": "round6_monsters_ghosts_devils",    "id": "2oaHX4YeIRuStMk1Kc1OKQ", "format": "titles"  }
+  ],
+  "acceptedDupes": []
+}

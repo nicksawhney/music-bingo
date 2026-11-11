@@ -1,0 +1,11 @@
+{
+  "rounds": [
+    { "file": "round1_millennials_in_love",     "id": "43YPMQ60hDhKfyueyfe3Q0", "format": "artists" },
+    { "file": "round2_2010s_bangers",           "id": "6KJ5WssZEaVRebR4mngSTB", "format": "titles"  },
+    { "file": "round3_hip_hop_and_rap",         "id": "2tA4wDyUgPWcGLlsHAmsFJ", "format": "artists" },
+    { "file": "round4_nickelodeon_and_disney",  "id": "2EyJFkhRq0BdPC0DH7rCLL", "format": "titles"  },
+    { "file": "round5_wedding_reception",       "id": "12nZL1dh3zOZIoryGKl82C", "format": "titles"  },
+    { "file": "round6_famous_intros_blackout",  "id": "1fQ8ybNqimmfova7kjDtA2", "format": "artists" }
+  ],
+  "acceptedDupes": []
+}

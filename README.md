@@ -20,6 +20,16 @@ node scripts/bingobaker.js create "Round 1 - Pop Divas" playlists/round1.txt
 
 ## What's in the box
 
+Every night that has been run is archived here, so past rounds can be reused
+or checked for song overlap:
+
+- `playlists/MMDD/` — the song/artist lists, Spotify reference files, and
+  event guide for each night.
+- `cards/MMDD/` — the generated BingoBaker card PDFs for that night.
+- `NOTES.md` — running log of hosting lessons and tooling gotchas.
+- `.claude/memory/` — Claude Code project memories (see
+  [Claude Code integration](#claude-code-integration)).
+
 ### `scripts/bingobaker.js`
 
 Automates [BingoBaker](https://bingobaker.com) card creation using Puppeteer. Give it a title and a text file of items, and it:
@@ -203,6 +213,17 @@ Each PDF has 40 unique cards (10 pages x 4 per page). Print them out.
 ## Claude Code integration
 
 If you use [Claude Code](https://claude.ai/claude-code), this repo includes a `/bingo-night` slash command that walks you through the full flow — brainstorming rounds, curating songs, generating text files, and creating bingo cards.
+
+The accumulated project memories (host preferences, round rules, known tooling
+quirks) are checked in under `.claude/memory/`. Claude Code reads memory from
+`~/.claude/projects/`, not from the repo, so **on a fresh clone run:**
+
+```bash
+./.claude/memory/restore-memory.sh
+```
+
+See `.claude/memory/RESTORE.md` for details and for how to sync memory changes
+back into git later.
 
 ## Example output
 

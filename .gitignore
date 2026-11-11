@@ -1,5 +1,7 @@
 node_modules/
-cards/
+
+# cards/ IS tracked — the generated BingoBaker PDFs are durable artifacts
+# of each night and are archived in this repo on purpose.
 
 # Credentials — never commit these
 bingobaker-config.json
